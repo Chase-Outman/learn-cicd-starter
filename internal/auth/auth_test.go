@@ -1,8 +1,8 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
-	"reflect"
 	"strings"
 	"testing"
 )
@@ -15,26 +15,31 @@ func TestGetAPIKey(t *testing.T) {
 		want    string
 		wantErr string
 	}{
-		"simple":           {key: "Authorization", value: "XXXXXXXX", want: "XXXXXXXX", wantErr: ""},
-		"incorrect header": {key: "Bearer", value: "XXXXXXX", want: "", wantErr: "malformed authorization header"},
-		"no header":        {key: "", value: "", want: "", wantErr: "no authorization header included"},
+		"simple":           {key: "Authorization", value: "ApiKey xxxxxx", want: "xxxxxx"},
+		"incorrect header": {key: "Bearer", value: "ApiKey xxxxxx", wantErr: "no authorization header included"},
+		"no header":        {wantErr: "no authorization header included"},
 	}
 
 	for name, tc := range tests {
-		header := http.Header{}
-		header.Add(tc.key, tc.value)
 
-		got, err := GetAPIKey(header)
-		if err != nil {
-			if strings.Contains(err.Error(), tc.wantErr) {
+		t.Run(fmt.Sprintf("TestGetAPIKey Case %v", name), func(t *testing.T) {
+			header := http.Header{}
+			header.Add(tc.key, tc.value)
+
+			output, err := GetAPIKey(header)
+			if err != nil {
+				if strings.Contains(err.Error(), tc.wantErr) {
+					return
+				}
+				t.Errorf("Unexpected: TestGetAPIKey:%v\n", err)
 				return
 			}
-			t.Errorf("Unexpected: TestGetAPIKey:%v\n", err)
-			return
-		}
-		if !reflect.DeepEqual(tc.want, got) {
-			t.Errorf("%s: expected: %v, got: %v", name, tc.want, got)
-			return
-		}
+
+			if output != tc.want {
+				t.Errorf("Unexpected: TestGetAPIKey:%s", output)
+				return
+			}
+		})
+
 	}
 }
