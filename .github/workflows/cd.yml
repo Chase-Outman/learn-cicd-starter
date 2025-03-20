@@ -1,3 +1,5 @@
+name: cd
+
 on:
   push:
     branches: [main]
@@ -18,3 +20,6 @@ jobs:
 
       - name: Build production
         run: ./scripts/buildprod.sh
+
+      - name: Build and Push Docker image
+        run: gcloud builds submit --tag us-central1-docker.pkg.dev/notely-454102/notely-ar-repo/notely:latest .
